@@ -1,0 +1,24 @@
+---
+title: "The Spotify Project"
+author: "Arnob Chanda"
+date: "11/10/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Intro here
+
+## EDA and cleaning
+
+```{r}
+df <- read.csv("top10s.csv")
+summary(df)
+```
+
+
+
