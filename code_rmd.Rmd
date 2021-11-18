@@ -15,10 +15,141 @@ Intro here
 
 ## EDA and cleaning
 
+### General Cleaning
+
 ```{r}
 df <- read.csv("top10s.csv")
 summary(df)
 ```
+
+First column 'X' is redundant so removing it.
+
+```{r}
+df <- subset(df, select = -X)
+summary(df)
+```
+
+Checking if any title is repeated.
+
+```{r}
+unique_titles <- unique(df[c("title")])
+nrow(unique_titles)
+```
+
+We have 584 unique values, out of 603 total values. So we have 19 repeated titles.
+
+```{r}
+n_title_repeat <- data.frame(table(df$title))
+n_title_repeat[n_title_repeat$Freq > 1, ]
+```
+
+Checking if the everything is same in the repeated titles by creating a data frame with only the repeated values, sorting it and checking what is different.
+
+```{r}
+repeated_titles <- df[df$title %in% n_title_repeat$Var1[n_title_repeat$Freq > 1], ]
+library(dplyr)
+repeated_titles_sorted <- arrange(repeated_titles, title)
+head(repeated_titles_sorted)
+```
+
+Looking at the data, we can see that there are some songs, the only difference is the year.
+For others, the artist name is different. 
+If the only difference is the year, we remove the second occurrence of it, else we keep the row.
+
+```{r}
+#Start with Repeated column set to FALSE
+df$Repeated = FALSE
+#Iterate over all the rows in the data frame
+for(i in 1:nrow(df))
+{
+  #Get the indexes of the repeated values
+  same_title_index = which(df$title == df$title[i])
+  if(length(same_title_index)>1)
+  {
+    #The first occurrence is same_title_index[1], second one is same_title_index[2]
+    #Check artist name for both indexes and if its the same artist name mark the second occurrence as TRUE
+    if(df[same_title_index[1],]$artist == df[same_title_index[2],]$artist)
+    {
+      df[same_title_index[2],]$Repeated = TRUE
+    }
+  }
+}
+
+summary(df)
+```
+
+So, out of the 19 titles having the same names, 16 of then have have the same artist name.
+The second occurrence of the same title and artist has been marked TRUE.
+Based on this, we can remove those repeated rows and make a cleaner data frame.
+
+```{r}
+rows_to_be_deleted <- which(df$Repeated == TRUE)
+df_clean <- df[-c(rows_to_be_deleted),]
+df_clean <- subset(df_clean, select = -Repeated)
+summary(df_clean)
+```
+
+### Check for missing data
+
+From the summary we can see that there are no missing data.
+Plotting the missing data to confirm.
+
+```{r}
+library(VIM, quietly = TRUE)
+aggr(df_clean)
+```
+
+As there is no missing data, we don't need to replace any rows or columns.
+
+### Check for outliers
+
+Using Mahal score to eliminate outliers.
+
+```{r}
+df_variables <- df_clean[,-c(1,2,3,4)]
+mahal <- mahalanobis(df_variables,
+                     colMeans(df_variables),
+                     cov(df_variables), use = "pairwise.complete.obs")
+summary(mahal)
+```
+
+```{r}
+cutoff <- qchisq(1-.001, ncol(df_clean[,-c(1,2,3,4)]))
+cutoff
+```
+
+```{r}
+summary(mahal < cutoff)
+```
+
+So we have 20 outliers.
+Removing it.
+
+```{r}
+noout <- subset(df_clean, mahal<cutoff)
+summary(noout)
+```
+
+Additivity Assumption check:
+
+```{r}
+library(corrplot, quietly = TRUE)
+corrplot(cor(noout[-c(1,2,3,4)]))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
