@@ -114,7 +114,7 @@ summary(mahal)
 ```
 
 ```{r}
-cutoff <- qchisq(1-.001, ncol(df_clean[,-c(1,2,3,4)]))
+cutoff <- qchisq(1-.001, ncol(df_variables))
 cutoff
 ```
 
