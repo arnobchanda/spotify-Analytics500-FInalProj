@@ -137,14 +137,25 @@ library(corrplot, quietly = TRUE)
 corrplot(cor(noout[-c(1,2,3,4)]))
 ```
 
+Build Full Model:
 
+```{r}
+full.model <- lm(pop ~., data = noout[-c(1,2,3,4)])
+summary(full.model)
+```
 
+Build Model based on high correlation (nrgy, live, dur)
 
+```{r}
+model_high_corr <- lm(pop ~ nrgy + live + dur, data = noout)
+summary(model_high_corr)
+```
 
-
-
-
-
+Build Stepwise Model
+```{r}
+step.model <- stepAIC(full.model, direction = "both",trace = FALSE)
+summary(step.model)
+```
 
 
 
