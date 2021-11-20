@@ -218,11 +218,10 @@ abline(v = 0)}
 ### Build Full Model:
 
 ```{r}
-library(MASS)
-library(leaps)
 # TODO: Determine whether year should be included or not
 full.model <- lm(pop ~., data = noout[-c(1,2,3,4)])
 summary(full.model)
+anova(full.model)
 ```
 
 ### Build Model based on high correlation (nrgy, live, dur, dnce, acous)
@@ -230,13 +229,17 @@ summary(full.model)
 ```{r}
 model_high_corr <- lm(pop ~ nrgy + live + dur + dnce + acous, data = noout)
 summary(model_high_corr)
+anova(full.model,model_high_corr)
 ```
 
 ### Build Stepwise Model:
 
 ```{r}
+library(MASS)
+library(leaps)
 step.model <- stepAIC(full.model, direction = "both",trace = FALSE)
 summary(step.model)
+anova(full.model,model_high_corr,step.model)
 ```
 
 ## Model Evaluation and Interpretation (TBD)
