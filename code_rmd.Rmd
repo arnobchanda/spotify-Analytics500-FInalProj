@@ -1,6 +1,6 @@
 ---
 title: "The Spotify Project"
-author: "Arnob Chanda"
+author: "Arnob Chanda, Kai Mei, Hanying Chen"
 date: "11/10/2021"
 output: word_document
 ---
@@ -22,7 +22,7 @@ df <- read.csv("top10s.csv")
 summary(df)
 ```
 
-First column 'X' is redundant so removing it.
+First column 'X' is redundant so removing it. Also take a look at the summary statistics.
 
 ```{r}
 df <- subset(df, select = -X)
@@ -43,7 +43,7 @@ n_title_repeat <- data.frame(table(df$title))
 n_title_repeat[n_title_repeat$Freq > 1, ]
 ```
 
-Checking if the everything is same in the repeated titles by creating a data frame with only the repeated values, sorting it and checking what is different.
+Checking if everything is the same in the repeated titles by creating a data frame with only the repeated values, sorting it and checking what is different.
 
 ```{r}
 repeated_titles <- df[df$title %in% n_title_repeat$Var1[n_title_repeat$Freq > 1], ]
@@ -78,7 +78,7 @@ for(i in 1:nrow(df))
 summary(df)
 ```
 
-So, out of the 19 titles having the same names, 16 of then have have the same artist name.
+So, out of the 19 titles having the same names, 16 of them have the same artist name.
 The second occurrence of the same title and artist has been marked TRUE.
 Based on this, we can remove those repeated rows and make a cleaner data frame.
 
@@ -95,6 +95,7 @@ From the summary we can see that there are no missing data.
 Plotting the missing data to confirm.
 
 ```{r}
+# install.packages('VIM')
 library(VIM, quietly = TRUE)
 aggr(df_clean)
 ```
@@ -117,7 +118,7 @@ summary(mahal)
 cutoff <- qchisq(1-.001, ncol(df_variables))
 cutoff
 ```
-
+The cutoff value of Mahal distance is 29.5883
 ```{r}
 summary(mahal < cutoff)
 ```
@@ -130,40 +131,112 @@ noout <- subset(df_clean, mahal<cutoff)
 summary(noout)
 ```
 
-Additivity Assumption check:
-
-```{r}
+### Check Correlation
+```{r cor}
 library(corrplot, quietly = TRUE)
 corrplot(cor(noout[-c(1,2,3,4)]))
 ```
 
-Build Full Model:
+### Visualize the distribution of `top.genre` and `year`
+```{r}
+library(ggplot2)
+cleanup <- theme(panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.background = element_blank(),
+                axis.line.x = element_line(color = 'black'),
+                axis.line.y = element_line(color = 'black'),
+                legend.key = element_rect(fill = 'white'),
+                text = element_text(size = 12))
+
+genre_freq <- as.data.frame(table(df$top.genre))
+year_freq <- as.data.frame(table(df$year))
+
+bar_lot_year <- ggplot(data = year_freq, aes(x = Var1, y = Freq, fill = Var1))
+bar_lot_year + 
+   stat_summary(fun = mean,
+                 geom = 'bar',
+                 position = 'dodge',
+                 ) +
+    xlab("Year") +
+    ylab("Count") + 
+    labs(title="Number of songs by year") +
+    cleanup
+
+# We have too many genres in the dataset, so we only view the top 5 genres and group the rest into 'Others'
+k <- 5
+top_k_genres <- genre_freq[order(-genre_freq$Freq), ][1:k, ]
+others <- subset(genre_freq, !(Var1 %in% top_k_genres$Var1))
+df_others <-data.frame("others", sum(others$Freq))
+names(df_others)<-c("Var1", "Freq")
+# combine two dfs
+df_new <- rbind(top_k_genres, df_others)
+
+pie_genre <- ggplot(data = df_new, aes(x = "", y = Freq, fill = Var1))
+pie_genre + 
+    geom_col() +
+    coord_polar(theta = "y") +
+    scale_fill_brewer(palette = "RdYlBu") +
+    guides(fill = guide_legend(title = "Genre")) +
+    ggtitle("Most popular genres")+
+    theme_void()
+```
+
+From year 2010 to 2019, year 2015 has the largest number of songs. The top 5 popular genres are dance pop, pop, canadian pop, barbadian pop and boy band.
+
+### Check Assumptions
+1. Additivity
+```{r additivity}
+# TODO: Add interpretation
+model <- lm(pop ~., data = noout[-c(1,2,3,4)])  # do not include title, artist, genre or year
+summary(model, correlation = TRUE)
+```
+
+2. Linearity
+```{r linearity}
+# TODO: Add interpretation
+standardized <- rstudent(model)
+fitted <- scale(model$fitted.values)
+{qqnorm(standardized)
+abline(0,1)}
+```
+
+3. Normality
+```{r normality}
+# TODO: Add interpretation
+hist(standardized, breaks=15)
+```
+
+4. Homogeneity and Homoscedasticity
+```{r homogs}
+# TODO: Add interpretation
+{plot(fitvalues, standardized) 
+abline(0,0)
+abline(v = 0)}
+```
+
+## Modeling
+### Build Full Model:
 
 ```{r}
 library(MASS)
 library(leaps)
+# TODO: Determine whether year should be included or not
 full.model <- lm(pop ~., data = noout[-c(1,2,3,4)])
 summary(full.model)
 ```
 
-Build Model based on high correlation (nrgy, live, dur, dnce, acous)
+### Build Model based on high correlation (nrgy, live, dur, dnce, acous)
 
 ```{r}
 model_high_corr <- lm(pop ~ nrgy + live + dur + dnce + acous, data = noout)
 summary(model_high_corr)
 ```
 
-Build Stepwise Model:
+### Build Stepwise Model:
 
 ```{r}
 step.model <- stepAIC(full.model, direction = "both",trace = FALSE)
 summary(step.model)
 ```
 
-
-
-
-
-
-
-
+## Model Evaluation and Interpretation (TBD)
