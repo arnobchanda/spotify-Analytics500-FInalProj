@@ -140,6 +140,8 @@ corrplot(cor(noout[-c(1,2,3,4)]))
 Build Full Model:
 
 ```{r}
+library(MASS)
+library(leaps)
 full.model <- lm(pop ~., data = noout[-c(1,2,3,4)])
 summary(full.model)
 ```
