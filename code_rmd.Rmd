@@ -78,7 +78,7 @@ for(i in 1:nrow(df))
 summary(df)
 ```
 
-So, out of the 19 titles having the same names, 16 of then have have the same artist name.
+So, out of the 19 titles having the same names, 16 of them have the same artist name.
 The second occurrence of the same title and artist has been marked TRUE.
 Based on this, we can remove those repeated rows and make a cleaner data frame.
 
@@ -181,17 +181,19 @@ pie_genre +
     theme_void()
 ```
 
-From year 2010 to 2019, year 2015 has the greatest number of songs. The top 5 popular genres are dance pop, pop, canadian pop, barbadian pop and boy band.
+From year 2010 to 2019, year 2015 has the largest number of songs. The top 5 popular genres are dance pop, pop, canadian pop, barbadian pop and boy band.
 
 ### Check Assumptions
 1. Additivity
 ```{r additivity}
+# TODO: Add interpretation
 model <- lm(pop ~., data = noout[-c(1,2,3,4)])  # do not include title, artist, genre or year
 summary(model, correlation = TRUE)
 ```
 
 2. Linearity
 ```{r linearity}
+# TODO: Add interpretation
 standardized <- rstudent(model)
 fitted <- scale(model$fitted.values)
 {qqnorm(standardized)
@@ -200,11 +202,13 @@ abline(0,1)}
 
 3. Normality
 ```{r normality}
+# TODO: Add interpretation
 hist(standardized, breaks=15)
 ```
 
 4. Homogeneity and Homoscedasticity
 ```{r homogs}
+# TODO: Add interpretation
 {plot(fitvalues, standardized) 
 abline(0,0)
 abline(v = 0)}
@@ -216,6 +220,7 @@ abline(v = 0)}
 ```{r}
 library(MASS)
 library(leaps)
+# TODO: Determine whether year should be included or not
 full.model <- lm(pop ~., data = noout[-c(1,2,3,4)])
 summary(full.model)
 ```
@@ -234,4 +239,4 @@ step.model <- stepAIC(full.model, direction = "both",trace = FALSE)
 summary(step.model)
 ```
 
-## Model Evaluation and Interpretation
+## Model Evaluation and Interpretation (TBD)
