@@ -154,6 +154,9 @@ summary(model_high_corr)
 Build Stepwise Model:
 
 ```{r}
+library(caret) 
+library(leaps)
+library(MASS)
 step.model <- stepAIC(full.model, direction = "both",trace = FALSE)
 summary(step.model)
 ```
