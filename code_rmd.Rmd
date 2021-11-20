@@ -144,14 +144,15 @@ full.model <- lm(pop ~., data = noout[-c(1,2,3,4)])
 summary(full.model)
 ```
 
-Build Model based on high correlation (nrgy, live, dur)
+Build Model based on high correlation (nrgy, live, dur, dnce, acous)
 
 ```{r}
-model_high_corr <- lm(pop ~ nrgy + live + dur, data = noout)
+model_high_corr <- lm(pop ~ nrgy + live + dur + dnce + acous, data = noout)
 summary(model_high_corr)
 ```
 
-Build Stepwise Model
+Build Stepwise Model:
+
 ```{r}
 step.model <- stepAIC(full.model, direction = "both",trace = FALSE)
 summary(step.model)
