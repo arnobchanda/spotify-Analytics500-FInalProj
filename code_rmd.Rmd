@@ -137,6 +137,8 @@ library(corrplot, quietly = TRUE)
 corrplot(cor(noout[-c(1,2,3,4)]))
 ```
 
+Based on the correlation plot above, we can see `acous` has a strong negative correlation with `nrgy` while `nrgy` and `dB` are strongly negatively correlated.
+
 ### Visualize the distribution of `top.genre` and `year`
 ```{r}
 library(ggplot2)
@@ -183,6 +185,14 @@ pie_genre +
 
 From year 2010 to 2019, year 2015 has the largest number of songs. The top 5 popular genres are dance pop, pop, canadian pop, barbadian pop and boy band.
 
+### Popular artists
+```{r}
+k <- 10
+artists <- as.data.frame(table(noout$artist))
+top_k_artists <- artists[order(-artists$Freq), ][1:k, ]
+top_k_artists
+```
+
 ### Check Assumptions
 1. Additivity
 ```{r additivity}
@@ -202,23 +212,23 @@ abline(0,1)}
 
 3. Normality
 ```{r normality}
-# TODO: Add interpretation
 hist(standardized, breaks=15)
 ```
+The histogram of standardized residuals is left skewed, indicating the normality assumption might be invalid.
 
 4. Homogeneity and Homoscedasticity
 ```{r homogs}
-# TODO: Add interpretation
+fitvalues <- scale(model$fitted.values)
 {plot(fitvalues, standardized) 
 abline(0,0)
 abline(v = 0)}
 ```
+Homogeneity assumption does not hold well since the spread below 0 is slightly wider than above, while homoscedasticity holds given that the spread across x-axis is generally even.
 
 ## Modeling
 ### Build Full Model:
 
 ```{r}
-# TODO: Determine whether year should be included or not
 full.model <- lm(pop ~., data = noout[-c(1,2,3,4)])
 summary(full.model)
 anova(full.model)
@@ -235,6 +245,8 @@ anova(full.model,model_high_corr)
 ### Build Stepwise Model:
 
 ```{r}
+#install.packages('leaps')
+#install.packages('MASS')
 library(MASS)
 library(leaps)
 step.model <- stepAIC(full.model, direction = "both",trace = FALSE)
@@ -242,4 +254,36 @@ summary(step.model)
 anova(full.model,model_high_corr,step.model)
 ```
 
-## Model Evaluation and Interpretation (TBD)
+## Model Evaluation
+
+Visualize the fitted values vs actual.
+
+```{r}
+{plot(full.model$fitted.values,
+     noout$pop,
+     xlab = "Predicted Values",
+     ylab = "Actual Values")
+abline(a = 0,
+       b = 1,
+       col = "red",
+       lwd = 2)}
+
+{plot(step.model$fitted.values,
+     noout$pop,
+     xlab = "Predicted Values",
+     ylab = "Actual Values")
+abline(a = 0,
+       b = 1,
+       col = "red",
+       lwd = 2)}
+```
+
+Find the best model for predicting popularity. We will use root mean squared error to evaluate model performance.
+
+```{r}
+# install.packages('Metrics')
+library(Metrics)
+rmse(noout$pop, full.model$fitted.values)
+rmse(noout$pop, model_high_corr$fitted.values)
+rmse(noout$pop, step.model$fitted.values)
+```
