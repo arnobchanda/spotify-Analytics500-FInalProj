@@ -104,7 +104,7 @@ As there is no missing data, we don't need to replace any rows or columns.
 
 ### Check for outliers
 
-Using Mahal score to eliminate outliers.
+a. Using Mahal score to eliminate outliers.
 
 ```{r}
 df_variables <- df_clean[,-c(1,2,3,4)]
@@ -115,16 +115,42 @@ summary(mahal)
 ```
 
 ```{r}
-cutoff <- qchisq(1-.001, ncol(df_variables))
-cutoff
+cutmahal <- qchisq(1-.001, ncol(df_variables))
+cutmahal
 ```
 The cutoff value of Mahal distance is 29.5883
 ```{r}
-summary(mahal < cutoff)
+badmahal <- as.numeric(mahal > cutmahal) ##note the direction of the > 
+table(badmahal)
 ```
 
-So we have 20 outliers.
-Removing it.
+b. Leverage
+```{r leverage}
+model1 <- lm(pop ~ ., 
+             data = df_variables)
+k <- 9 ##number of IVs
+leverage <- hatvalues(model1)
+cutleverage <- (2*k+2) / nrow(df_variables)
+cutleverage
+badleverage <- as.numeric(leverage > cutleverage)
+table(badleverage)
+```
+
+c. Cook's distance
+```{r cooks}
+cooks <- cooks.distance(model1)
+cutcooks <- 4 / (nrow(df_variables) - k - 1)
+cutcooks
+badcooks <- as.numeric(cooks > cutcooks)
+table(badcooks)
+```
+
+```{r overall}
+totalout <- badmahal + badleverage + badcooks
+table(totalout)
+noout <- subset(df_variables, totalout < 2)
+```
+We have 17 data points with two measurements greater than the cutoff and 8 data points with all three measurements greater than the cutoff. Removing them.
 
 ```{r}
 noout <- subset(df_clean, mahal<cutoff)
@@ -138,6 +164,23 @@ corrplot(cor(noout[-c(1,2,3,4)]))
 ```
 
 Based on the correlation plot above, we can see `acous` has a strong negative correlation with `nrgy` while `nrgy` and `dB` are strongly negatively correlated.
+
+### Check relationship between `dB` and `nrgy`
+
+```{r}
+plot(noout$dB, noout$nrgy)
+scatter = ggplot(noout, aes(x = dB, y = nrgy))
+scatter + geom_point(color = "#E7B800") +
+  geom_smooth(method = 'lm', color = '#D16103', fill = '#FC4E07') +
+  xlab('Loudness (dB)')+
+  ylab('Energy')+
+  cleanup
+```
+
+### Visualize dependent variable `pop`
+```{r}
+hist(noout$pop, breaks=20)
+```
 
 ### Visualize the distribution of `top.genre` and `year`
 ```{r}
@@ -189,9 +232,11 @@ From year 2010 to 2019, year 2015 has the largest number of songs. The top 5 pop
 ```{r}
 k <- 10
 artists <- as.data.frame(table(noout$artist))
-top_k_artists <- artists[order(-artists$Freq), ][1:k, ]
+names(artists) <- c('Artist', 'Count')
+top_k_artists <- artists[order(-artists$Count), ][1:k, ]
 top_k_artists
 ```
+
 
 ### Check Assumptions
 1. Additivity
