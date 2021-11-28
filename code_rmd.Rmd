@@ -282,7 +282,7 @@ anova(full.model)
 ### Build Model based on high correlation (nrgy, live, dur, dnce, acous)
 
 ```{r}
-model_high_corr <- lm(pop ~ nrgy + live + dur + dnce + acous, data = noout)
+model_high_corr <- lm(pop ~ nrgy + live + dur + dnce + acous, data = noout[-c(1,2,3,4)])
 summary(model_high_corr)
 anova(full.model,model_high_corr)
 ```
