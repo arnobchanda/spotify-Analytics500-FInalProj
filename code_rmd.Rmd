@@ -114,6 +114,7 @@ mahal <- mahalanobis(df_variables,
 summary(mahal)
 ```
 
+
 ```{r}
 cutmahal <- qchisq(1-.001, ncol(df_variables))
 cutmahal
@@ -153,7 +154,7 @@ noout <- subset(df_variables, totalout < 2)
 We have 17 data points with two measurements greater than the cutoff and 8 data points with all three measurements greater than the cutoff. Removing them.
 
 ```{r}
-noout <- subset(df_clean, mahal<cutoff)
+#noout <- subset(df_clean, mahal<cutoff)
 summary(noout)
 ```
 
@@ -168,6 +169,7 @@ Based on the correlation plot above, we can see `acous` has a strong negative co
 ### Check relationship between `dB` and `nrgy`
 
 ```{r}
+library(ggplot2)
 plot(noout$dB, noout$nrgy)
 scatter = ggplot(noout, aes(x = dB, y = nrgy))
 scatter + geom_point(color = "#E7B800") +
@@ -204,8 +206,7 @@ bar_lot_year +
                  ) +
     xlab("Year") +
     ylab("Count") + 
-    labs(title="Number of songs by year") +
-    cleanup
+    labs(title="Number of songs by year") + cleanup
 
 # We have too many genres in the dataset, so we only view the top 5 genres and group the rest into 'Others'
 k <- 5
